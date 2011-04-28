@@ -39,9 +39,7 @@ MOON_NPN_Version (int *plugin_major, int *plugin_minor, int *netscape_major, int
 NPError
 MOON_NPN_GetValue (NPP instance, NPNVariable variable, void *r_value)
 {
-	// This will end up calling Deployment::SetCurrent before mono has initialized, which crashes.
-	// in any case NPN_GetValue should not end up running js code nor in other plugins.
-	// DeploymentStack deployment_push_pop;
+	DeploymentStack deployment_push_pop;
 	return MozillaFuncs.getvalue (instance, variable, r_value);
 }
 

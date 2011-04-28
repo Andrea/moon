@@ -177,6 +177,8 @@ class CurlDownloaderResponse : public HttpResponse {
 	bool aborted;
 	bool reported_start;
 
+	static void NotifyFinalUriCallback (CallData *sender);
+	static void SetStatusCallback (CallData *sender);
  public:
 	/* @SkipFactories */
 	CurlDownloaderResponse (CurlHttpHandler *bridge,

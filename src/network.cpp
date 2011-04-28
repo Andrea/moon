@@ -519,6 +519,8 @@ HttpRequest::NotifyFinalUri (const char *value)
 void
 HttpRequest::NotifyFinalUri (const Uri *value)
 {
+	VERIFY_MAIN_THREAD;
+
 	delete final_uri;
 	final_uri = Uri::Clone (value);
 
@@ -761,6 +763,8 @@ void
 HttpResponse::SetStatus (gint32 status, const char *status_text)
 {
 	LOG_DOWNLOADER ("HttpResponse::SetStatus (%i, %s)\n", status, status_text);
+	VERIFY_MAIN_THREAD;
+
 	response_status = status;
 	g_free (response_status_text);
 	response_status_text = g_strdup (status_text);

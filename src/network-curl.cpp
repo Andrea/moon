@@ -58,8 +58,6 @@ static void _abort (EventObject *sender);
 static void _started (CallData *sender);
 static void _visitor (CallData *sender);
 static void _available (CallData *sender);
-//static void _finished (CallData *sender);
-
 
 // Debugging methods that dump all data sent through
 // curl
@@ -255,6 +253,23 @@ _available (CallData *sender)
 	res->Available (data->buffer, data->size);
 }
 
+void
+CurlDownloaderResponse::NotifyFinalUriCallback (CallData *sender)
+{
+	CallData *data = (CallData *) sender;
+	CurlDownloaderResponse *res = data->res;
+	if (res->request != NULL)
+		res->request->NotifyFinalUri (data->val);
+}
+
+void
+CurlDownloaderResponse::SetStatusCallback (CallData *sender)
+{
+	CallData *data = (CallData *) sender;
+	CurlDownloaderResponse *res = data->res;
+	res->SetStatus (res->status, res->statusText);
+}
+
 static inline const char *
 get_state_name (int state)
 {
@@ -268,16 +283,6 @@ get_state_name (int state)
 	default: return "UNKNOWN";
 	}
 }
-
-
-#if 0
-static void
-_finished (CallData *sender)
-{
-	CurlDownloaderResponse* res = (CurlDownloaderResponse*) ((CallData*)sender)->res;
-	res->Finished ();
-}
-#endif
 
 CurlDownloaderRequest::CurlDownloaderRequest (CurlHttpHandler *handler, HttpRequest::Options options)
 	: HttpRequest (Type::CURLDOWNLOADERREQUEST, handler, options), headers(NULL), response(NULL),
@@ -570,7 +575,7 @@ CurlDownloaderResponse::HeaderReceived (void *ptr, size_t size)
 		curl_easy_getinfo (request->GetHandle (), CURLINFO_RESPONSE_CODE, &status);
 		curl_easy_getinfo (request->GetHandle (), CURLINFO_EFFECTIVE_URL, &final_url);
 
-		request->NotifyFinalUri (final_url);
+		bridge->AddCallback (NotifyFinalUriCallback, this, NULL, 0, NULL, g_strdup (final_url));
 
 		// The first line
 		// Parse status line: "HTTP/1.X # <status>"
@@ -582,7 +587,7 @@ CurlDownloaderResponse::HeaderReceived (void *ptr, size_t size)
 		g_free (statusLine);
 		g_strfreev (strs);
 
-		SetStatus (status, statusText);
+		bridge->AddCallback (SetStatusCallback, this, NULL, 0, NULL, NULL);
 
 		/* if we got 100, curl still needs to send the body of the POST
 		 * so we don't have the "real" response yet
